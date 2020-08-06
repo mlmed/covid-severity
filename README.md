@@ -12,7 +12,7 @@ License: CC BY-SA Creative Commons Attribution-ShareAlike
 These are from the follow paper:
 Cohen, Joseph Paul, et al. Predicting COVID-19 Pneumonia Severity on Chest X-Ray with Deep Learning. Cureus Medical Journal, 10.7759/cureus.9448, http://arxiv.org/abs/2005.11856.
 
-```
+```bibtex
 @article{Cohen2020Severity,
 title = {Predicting COVID-19 Pneumonia Severity on Chest X-ray with Deep Learning},
 author = {Cohen, Joseph Paul and Dao, Lan and Morrison, Paul and Roth, Karsten and Bengio, Yoshua and Shen, Beiyi and Abbasi, Almas and Hoshmand-Kochi, Mahsa and Ghassemi, Marzyeh and Li, Haifang and Duong, Tim Q},
@@ -25,7 +25,8 @@ year = {2020}
 
 To run the CLI:
 
-```
+```bash
+# basic command line predictions
 $ python predict_severity.py 2966893D-5DDF-4B68-9E2B-4979D5956C8E.jpeg
 geographic_extent (0-8): 5.978744940174467
 opacity (0-6): 4.169582852893416
