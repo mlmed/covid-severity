@@ -10,13 +10,15 @@ Data is here: [Pneumonia severity scores for 94 images](https://github.com/ieee8
 License: CC BY-SA Creative Commons Attribution-ShareAlike
 
 These are from the follow paper:
-Cohen, Joseph Paul, et al. Predicting COVID-19 Pneumonia Severity on Chest X-Ray with Deep Learning. May 2020, http://arxiv.org/abs/2005.11856.
+Cohen, Joseph Paul, et al. Predicting COVID-19 Pneumonia Severity on Chest X-Ray with Deep Learning. Cureus Medical Journal, 10.7759/cureus.9448, http://arxiv.org/abs/2005.11856.
 
 ```
 @article{Cohen2020Severity,
 title = {Predicting COVID-19 Pneumonia Severity on Chest X-ray with Deep Learning},
 author = {Cohen, Joseph Paul and Dao, Lan and Morrison, Paul and Roth, Karsten and Bengio, Yoshua and Shen, Beiyi and Abbasi, Almas and Hoshmand-Kochi, Mahsa and Ghassemi, Marzyeh and Li, Haifang and Duong, Tim Q},
-url = {http://arxiv.org/abs/2005.11856},
+journal = {Cureus Medical Journal},
+doi = {10.7759/cureus.9448}
+url = {https://www.cureus.com/articles/35692-predicting-covid-19-pneumonia-severity-on-chest-x-ray-with-deep-learning},
 year = {2020}
 }
 ```
