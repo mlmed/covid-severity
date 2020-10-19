@@ -2,12 +2,13 @@
 # coding: utf-8
 
 import os,sys
-sys.path.insert(0,"..")
+#sys.path.insert(0,"..")
 from glob import glob
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import skimage
+import skimage.io
 import pprint
 
 import torch
