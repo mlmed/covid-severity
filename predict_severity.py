@@ -19,7 +19,8 @@ import torchxrayvision as xrv
 
 parser = argparse.ArgumentParser()
 parser.add_argument('img_path', type=str)
-parser.add_argument('-cuda', default=False, help='', action='store_true')
+parser.add_argument('-cuda', default=False, help='If cuda should be used or not', action='store_true')
+parser.add_argument('-batch', default=False, help='Batch mode to output for a csv file', action='store_true')
 parser.add_argument('-saliency_path', default=None, help='path to write the saliancy map as an image')
 
 cfg = parser.parse_args()
@@ -71,8 +72,14 @@ with torch.no_grad():
         model2 = model2.cuda()
         
     outputs = model2(img)
-    print("geographic_extent (0-8):","{:1.4}".format(outputs["geographic_extent"].cpu().numpy()))
-    print("opacity (0-6):","{:1.4}".format(outputs["opacity"].cpu().numpy()))
+    
+    geo = outputs["geographic_extent"].cpu().numpy()
+    opa = outputs["opacity"].cpu().numpy()
+    if cfg.batch:
+        print("{},{:1.4},{:1.4}".format(os.path.basename(cfg.img_path), geo, opa))
+    else:
+        print("geographic_extent (0-8):","{:1.4}".format(geo))
+        print("opacity (0-6):","{:1.4}".format(opa))
     
     
     
