@@ -17,34 +17,6 @@ import torchvision, torchvision.transforms
 import skimage, skimage.filters
 import torchxrayvision as xrv
 
-parser = argparse.ArgumentParser()
-parser.add_argument('img_path', type=str)
-parser.add_argument('-cuda', default=False, help='If cuda should be used or not', action='store_true')
-parser.add_argument('-batch', default=False, help='Batch mode to output for a csv file', action='store_true')
-parser.add_argument('-saliency_path', default=None, help='path to write the saliancy map as an image')
-
-cfg = parser.parse_args()
-
-
-img = skimage.io.imread(cfg.img_path)
-img = xrv.datasets.normalize(img, 255)  
-
-# Check that images are 2D arrays
-if len(img.shape) > 2:
-    img = img[:, :, 0]
-if len(img.shape) < 2:
-    print("error, dimension lower than 2 for image")
-
-# Add color channel
-img = img[None, :, :]                    
-
-
-transform = torchvision.transforms.Compose([xrv.datasets.XRayCenterCrop(),
-                                            xrv.datasets.XRayResizer(224)])
-
-img = transform(img)
-
-
 class PneumoniaSeverityNet(torch.nn.Module):
     def __init__(self):
         super(PneumoniaSeverityNet, self).__init__()
@@ -54,34 +26,53 @@ class PneumoniaSeverityNet(torch.nn.Module):
         self.theta_bias_opacity = torch.from_numpy(np.asarray((0.5484423041343689, 2.5535977)))
 
     def forward(self, x):
-        preds = self.model(x)
-        preds = preds[0,xrv.datasets.default_pathologies.index("Lung Opacity")]
-        geographic_extent = preds*self.theta_bias_geographic_extent[0]+self.theta_bias_geographic_extent[1]
-        opacity = preds*self.theta_bias_opacity[0]+self.theta_bias_opacity[1]
-        geographic_extent = torch.clamp(geographic_extent,0,8)
-        opacity = torch.clamp(opacity,0,6)
-        return {"geographic_extent":geographic_extent,"opacity":opacity}
-
-    
-model2 = PneumoniaSeverityNet()
-
-with torch.no_grad():
-    img = torch.from_numpy(img).unsqueeze(0)
-    if cfg.cuda:
-        img = img.cuda()
-        model2 = model2.cuda()
         
-    outputs = model2(img)
+        ret = {}
+        feats = self.model.features(x)
+        feats = F.relu(feats, inplace=True)
+        ret["feats"] = F.adaptive_avg_pool2d(feats, (1, 1)).view(feats.size(0), -1)
+        ret["preds"] = self.model.classifier(ret["feats"])
+        
+        pred = ret["preds"][0,xrv.datasets.default_pathologies.index("Lung Opacity")]
+        geographic_extent = pred*self.theta_bias_geographic_extent[0]+self.theta_bias_geographic_extent[1]
+        opacity = pred*self.theta_bias_opacity[0]+self.theta_bias_opacity[1]
+        
+        ret["geographic_extent"] = torch.clamp(geographic_extent,0,8)
+        ret["opacity"] = torch.clamp(opacity,0,6)
+        
+        for k in ret.keys():
+            ret[k] = ret[k].cpu().numpy()
+        
+        return ret
+
+def process(model, img_path, cuda=False):
     
-    geo = outputs["geographic_extent"].cpu().numpy()
-    opa = outputs["opacity"].cpu().numpy()
-    if cfg.batch:
-        print("{},{:1.4},{:1.4}".format(os.path.basename(cfg.img_path), geo, opa))
-    else:
-        print("geographic_extent (0-8):","{:1.4}".format(geo))
-        print("opacity (0-6):","{:1.4}".format(opa))
+    img = skimage.io.imread(img_path)
+    img = xrv.datasets.normalize(img, 255)  
+
+    # Check that images are 2D arrays
+    if len(img.shape) > 2:
+        img = img[:, :, 0]
+    if len(img.shape) < 2:
+        print("error, dimension lower than 2 for image")
+
+    # Add color channel
+    img = img[None, :, :]                    
     
+    transform = torchvision.transforms.Compose([xrv.datasets.XRayCenterCrop(),
+                                                xrv.datasets.XRayResizer(224)])
+
+    img = transform(img)
     
+    with torch.no_grad():
+        img = torch.from_numpy(img).unsqueeze(0)
+        if cuda:
+            img = img.cuda()
+            model = model.cuda()
+
+        outputs = model(img)
+        
+    return outputs
     
 def full_frame(width=None, height=None):
     import matplotlib as mpl
@@ -93,23 +84,48 @@ def full_frame(width=None, height=None):
     ax.get_yaxis().set_visible(False)
     plt.autoscale(tight=True)
     
-if cfg.saliency_path:  
-    if cfg.cuda:
-        img = img.cuda()
-        model2 = model2.cuda()
-
-    img = img.requires_grad_()
-    outputs = model2(img)
-    grads = torch.autograd.grad(outputs["geographic_extent"], img)[0][0][0]
-    blurred = skimage.filters.gaussian(grads**2, sigma=(5, 5), truncate=3.5)
     
-    full_frame()
-    my_dpi = 100
-    fig = plt.figure(frameon=False, figsize=(224/my_dpi, 224/my_dpi), dpi=my_dpi)
-    ax = plt.Axes(fig, [0., 0., 1., 1.])
-    ax.set_axis_off()
-    fig.add_axes(ax)
-    ax.imshow(img[0][0].detach(), cmap="gray", aspect='auto')
-    ax.imshow(blurred, alpha=0.5);
-    plt.savefig(cfg.saliency_path)
-   
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('img_path', type=str)
+    parser.add_argument('-cuda', default=False, help='If cuda should be used or not', action='store_true')
+    parser.add_argument('-batch', default=False, help='Batch mode to output for a csv file', action='store_true')
+    parser.add_argument('-saliency_path', default=None, help='path to write the saliancy map as an image')
+
+    cfg = parser.parse_args()
+
+
+    model = PneumoniaSeverityNet()
+
+
+    outputs = process(model, cfg.img_path, )
+
+    geo = outputs["geographic_extent"]
+    opa = outputs["opacity"]
+    
+    if cfg.batch:
+        print("{},{:1.4},{:1.4}".format(os.path.basename(cfg.img_path), geo, opa))
+    else:
+        print("geographic_extent (0-8):","{:1.4}".format(geo))
+        print("opacity (0-6):","{:1.4}".format(opa))
+
+    if cfg.saliency_path:  
+        if cfg.cuda:
+            img = img.cuda()
+            model2 = model2.cuda()
+
+        img = img.requires_grad_()
+        outputs = model(img)
+        grads = torch.autograd.grad(outputs["geographic_extent"], img)[0][0][0]
+        blurred = skimage.filters.gaussian(grads**2, sigma=(5, 5), truncate=3.5)
+
+        full_frame()
+        my_dpi = 100
+        fig = plt.figure(frameon=False, figsize=(224/my_dpi, 224/my_dpi), dpi=my_dpi)
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        ax.set_axis_off()
+        fig.add_axes(ax)
+        ax.imshow(img[0][0].detach(), cmap="gray", aspect='auto')
+        ax.imshow(blurred, alpha=0.5);
+        plt.savefig(cfg.saliency_path)
+
