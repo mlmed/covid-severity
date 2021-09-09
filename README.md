@@ -2,10 +2,19 @@
 
 🛑 NOT FOR MEDICAL USE 🛑 
 
+There are now two datasets:
+
+1. Scored severity for the COVID-19 Image Data Collection Dataset is here: [Pneumonia severity scores for 94 images](https://github.com/ieee8023/covid-chestxray-dataset/blob/master/annotations/covid-severity-scores.csv)
+2. Stonybrook Radiographic Assessment of Lung Opacity (RALO) dataset is here: [Pneumonia severity scores for 2373 images](https://zenodo.org/record/4634000)
+
+The scores are explained as follows for the RALO dataset:
+  - **geographic_extent_mean**: The extent of lung involvement by ground glass opacity or consolidation for each lung (right lung and left lung separately) was scored as: 0 = no involvement; 1 = <25% involvement; 2 = 25-50% involvement; 3 = 50-75% involvement; 4 = >75% involvement. The total extent score ranged from 0 to 8 (right lung and left lung together). 
+  - **opacity_mean**: The degree of opacity for each lung (right lung and left lung separately) was scored as: 0 = no opacity; 1 = ground glass opacity; 2 = consolidation; 3 = mix of consolidation and ground glass opacity (>50% consolidation); 4 = white-out. The total opacity score ranged from 0 to 8 (right lung and left lung together). NOTE: The total opacity score ranged from 0 to 6 for the COVID-19 Image Data Collection Dataset so scalling (like opacity/6\*8) will align the two datasets.
+
+
 Data is here: [Pneumonia severity scores for 94 images](https://github.com/ieee8023/covid-chestxray-dataset/blob/master/annotations/covid-severity-scores.csv)
 
-  - **geographic_extent_mean**: The extent of lung involvement by ground glass opacity or consolidation for each lung. The total extent score ranged from 0 to 8.		
-  - **opacity_mean**: The degree of opacity. The total opacity score ranged from 0 to 6.
+
 
 License: CC BY-SA Creative Commons Attribution-ShareAlike
 
